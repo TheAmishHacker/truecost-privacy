@@ -5,35 +5,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex">
-  <title>Open in TrueCost</title>
+  <title>Open TrueCost</title>
   <style>
-    :root { color-scheme: light dark; --bg: #F2F2F7; --card: #FFFFFF; --text: #111827; --muted: #6B7280; --tint: #0F766E; }
-    @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1C1C1E; --text: #FFFFFF; --muted: #98989F; --tint: #2BB5A8; } }
+    :root { color-scheme: light dark; --bg: #F2F2F7; --card: #FFFFFF; --text: #111827; --muted: #6B7280; --tint: #0F766E; --on-tint: #FFFFFF; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1C1C1E; --text: #FFFFFF; --muted: #98989F; --tint: #2BB5A8; --on-tint: #00201D; } }
     body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     main { max-width: 560px; margin: 0 auto; padding: 48px 16px; }
     .card { background: var(--card); border-radius: 14px; padding: 8px 24px 24px; }
     h1 { font-size: 26px; line-height: 1.2; margin: 16px 0 8px; }
-    li { margin: 8px 0; }
-    .muted { color: var(--muted); }
+    .button { display: block; text-align: center; background: var(--tint); color: var(--on-tint); font-weight: 600; text-decoration: none; padding: 14px; border-radius: 12px; margin: 20px 0 8px; }
+    .muted { color: var(--muted); font-size: 15px; }
+    [hidden] { display: none; }
   </style>
-  <script>
-    // The link's one-time code is only useful inside the TrueCost app on the phone
-    // that asked for the email. Take it out of the address bar and history here.
-    if (location.search || location.hash) history.replaceState(null, '', location.pathname);
-  </script>
 </head>
 <body>
   <main>
-    <div class="card">
-      <h1>Open this link in the TrueCost app</h1>
-      <p>This email link only works inside TrueCost, on the iPhone where you asked for the email.</p>
-      <ol>
-        <li>On that iPhone, make sure TrueCost is installed.</li>
-        <li>Go back to the email and tap the link again. If it opens this page, press and hold the link and choose <strong>Open in &ldquo;TrueCost&rdquo;</strong>.</li>
-        <li>If it still doesn&rsquo;t open, request a new email from the Profile tab in TrueCost.</li>
-      </ol>
-      <p class="muted">Links can only be used once and expire after a while.</p>
+    <div class="card" id="open" hidden>
+      <h1>Opening TrueCost…</h1>
+      <p>If TrueCost doesn’t open by itself, tap the button and choose <strong>Open</strong>.</p>
+      <a class="button" id="open-button" href="#">Open TrueCost</a>
+      <p class="muted">This works only on the iPhone where you asked for the email, with TrueCost installed.</p>
+    </div>
+    <div class="card" id="used" hidden>
+      <h1>This link has already been used</h1>
+      <p>Email links work once. Open TrueCost and request a new email from the Profile tab.</p>
     </div>
   </main>
+  <script>
+    // Email links from Supabase land here when a browser (not iOS) opens them, for
+    // example from Proton Mail into Brave. Pass only the one-time code (or an error)
+    // on to the app. The code is useless without the secret the TrueCost app on that
+    // iPhone holds (PKCE), so nothing here can sign anyone in by itself.
+    (function () {
+      var q = new URLSearchParams(location.search);
+      var keep = new URLSearchParams();
+      ['code', 'error', 'error_code', 'error_description'].forEach(function (k) {
+        var v = q.get(k);
+        if (v && v.length < 500) keep.set(k, v);
+      });
+      // Take the code out of the address bar and history.
+      if (location.search || location.hash) history.replaceState(null, '', location.pathname);
+      if (![...keep.keys()].length) { document.getElementById('used').hidden = false; return; }
+      var appUrl = 'truecost://auth-callback?' + keep.toString();
+      document.getElementById('open-button').href = appUrl;
+      document.getElementById('open').hidden = false;
+      location.href = appUrl;
+    })();
+  </script>
 </body>
 </html>
