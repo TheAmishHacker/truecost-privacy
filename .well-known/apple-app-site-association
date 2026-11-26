@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["6N5ZJ5D576.com.evenstickerco.truecost"],
+        "components": [
+          { "/": "/auth-callback", "comment": "Email links: confirm email, reset password" },
+          { "/": "/auth-callback/*", "comment": "Same, with a trailing slash" }
+        ]
+      }
+    ]
+  }
+}
